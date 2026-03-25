@@ -2,7 +2,37 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 providers:
-    '91':
+
+  '91':
+    - name: justdial
+      method: GET
+      url: https://t.justdial.com/api/india_api_write/18july2018/sendvcode.php
+      params:
+        mobile: '{target}'
+      identifier: 'sent' # Check if they still use lowercase 'sent'
+      
+    - name: housing
+      method: POST
+      url: https://login.housing.com/api/v2/send-otp
+      data_type: json
+      headers:
+        Content-Type: application/json
+        Origin: https://housing.com
+      data:
+        phone: '{target}'
+      identifier: 'sent'
+
+    - name: pharmeasy
+      method: POST
+      url: https://pharmeasy.in/api/auth/requestOTP
+      data_type: json
+      headers:
+        User-Agent: Mozilla/5.0
+        Origin: https://pharmeasy.in
+      data:
+        contactNumber: '{target}'
+      identifier: 'resendSmsCounter'
+multi:
         - name: confirmtkt
           method: GET
           url: https://securedapi.confirmtkt.com/api/platform/register
@@ -10,6 +40,7 @@ providers:
               newOtp: 'true'
               mobile_number: '{target}'
           identifier: 'false'
+
         - name: justdial
           method: GET
           url: https://t.justdial.com/api/india_api_write/18july2018/sendvcode.php

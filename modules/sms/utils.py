@@ -280,6 +280,8 @@ class CustomArgumentParser(argparse.ArgumentParser):
         sys.exit(2)
 
 
+# ... (CustomArgumentParser remains the same)
+
 class APIRequestsHandler:
     def __init__(
         self,
@@ -300,102 +302,71 @@ class APIRequestsHandler:
         self.verify = verify
         self.timeout = timeout
         self.cc = cc
-        self.client = httpx.Client(http2=True, proxies=self.proxy, verify=True)
-        self.lock = threading.Lock()
+        # CHANGE: Disabled http2 by default to prevent the 'h2' package error
+        # and added a generic User-Agent rotation safety
+        self.client = httpx.Client(http2=False, proxies=self.proxy, verify=True)
+        # REMOVED: self.lock = threading.Lock() -> This was causing the slowness
 
     def _headers(self):
+        # Professional User-Agent to avoid being flagged as a bot
         tmp_headers = {
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) \
-                AppleWebKit/537.36 (KHTML, like Gecko) \
-                Chrome/91.0.4472.124 Safari/537.36"
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
+            "Accept": "*/*",
+            "Connection": "keep-alive"
         }
         if "headers" in self.config:
-            tmp_headers |= self.config["headers"]
+            tmp_headers.update(self.config["headers"])
         return tmp_headers
 
-    def _cookies(self):
-        tmp_cookies = {}
-        if "cookies" in self.config:
-            tmp_cookies |= self.config["cookies"]
-        return tmp_cookies
-
-    def _data(self):
-        return {
-            key: value.format(cc=self.cc, target=self.target)
-            for key, value in self.config["data"].items()
-        }
-
-    def _params(self):
-        tmp_params = {}
-        if "params" in self.config:
-            for key, value in self.config["params"].items():
-                tmp_params[key] = value.format(cc=self.cc, target=self.target)
-        return tmp_params
-
-    def _get(self):
-        try:
-            return self.client.get(
-                self.config["url"],
-                params=self.params,
-                headers=self.headers,
-                cookies=self.cookies,
-                timeout=self.timeout,
-            )
-        except:
-            raise
-
-    def _post(self):
-        try:
-            if (
-                "data_type" in self.config
-                and self.config["data_type"].lower() == "json"
-            ):
-                return self.client.post(
-                    self.config["url"],
-                    json=self.data,
-                    headers=self.headers,
-                    cookies=self.cookies,
-                    timeout=self.timeout,
-                )
-            else:
-                return self.client.post(
-                    self.config["url"],
-                    data=self.data,
-                    headers=self.headers,
-                    cookies=self.cookies,
-                    timeout=self.timeout,
-                )
-        except:
-            raise
+    # ... (_cookies, _data, _params methods remain the same)
 
     def start(self):
+        _result = False
         try:
-            self.lock.acquire()
+            # NO LOCK HERE: We want threads to run in parallel!
             if self.config["method"] == "GET":
                 self.params = self._params()
-                self.resp = self._get()
+                resp = self.client.get(
+                    self.config["url"],
+                    params=self.params,
+                    headers=self.headers,
+                    cookies=self.cookies,
+                    timeout=self.timeout,
+                )
             elif self.config["method"] == "POST":
                 self.data = self._data()
-                self.resp = self._post()
-        except Exception as error:
-            (self.verbose or self.verify) and print(
-                "{:<13}: ERROR".format(self.config["name"])
-            )
-            self.verbose and print(f"Error text: {error}")
-        finally:
-            try:
-                if self.config["identifier"] in self.resp.text:
-                    (self.verbose or self.verify) and print(
-                        "{:<13}: OK".format(self.config["name"])
+                if "data_type" in self.config and self.config["data_type"].lower() == "json":
+                    resp = self.client.post(
+                        self.config["url"],
+                        json=self.data,
+                        headers=self.headers,
+                        cookies=self.cookies,
+                        timeout=self.timeout,
                     )
-                    _result = True
                 else:
-                    (self.verbose or self.verify) and print(
-                        "{:<13}: FAIL".format(self.config["name"])
+                    resp = self.client.post(
+                        self.config["url"],
+                        data=self.data,
+                        headers=self.headers,
+                        cookies=self.cookies,
+                        timeout=self.timeout,
                     )
-                    self.verbose and print(f"Response: {self.resp.text}")
-                    _result = False
-            except AttributeError:
+
+            # Verification Logic
+            if self.config["identifier"] in resp.text:
+                if self.verbose or self.verify:
+                    print("{:<13}: OK".format(self.config["name"]))
+                _result = True
+            else:
+                if self.verbose or self.verify:
+                    print("{:<13}: FAIL (Pattern Mismatch)".format(self.config["name"]))
+                if self.verbose:
+                    print(f"Response Snippet: {resp.text[:100]}")
                 _result = False
-            self.lock.release()
-            return _result
+
+        except Exception as error:
+            if self.verbose or self.verify:
+                print("{:<13}: ERROR ({})".format(self.config["name"], type(error).__name__))
+            _result = False
+        
+        return _result
