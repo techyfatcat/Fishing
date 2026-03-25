@@ -122,6 +122,8 @@ echo -e "  ${B}[2]${NC} Online Meeting (Camera Capture)"
 
 echo -e "  ${B}[3]${NC} Mega Giveaway (Location & Data)"
 
+echo -e "  ${B}[4]${NC} SMS Stress Tester (API Flooding)" # New Option
+
 read -p "  Selection > " option
 
 
@@ -162,7 +164,29 @@ elif [[ $option == "3" ]]; then
     TARGET_DIR="$ROOT_DIR/modules/giveaway"
     LOG_FILE="$ROOT_DIR/logs/output.txt"
     echo -e "\n${Y}[*] Loading Giveaway template...${NC}"
+
+############################################
+# SMS MODULE LOGIC
+############################################
+
+elif [[ $option == "4" ]]; then
+    echo -e "\n${Y}[*] Initializing SMS Module...${NC}"
+    read -p "  Enter Target Number: " target_num
+    read -p "  Enter Request Count (Recommended 50): " req_count
     
+    # Check for Python Requests library
+    if ! python3 -c "import requests" &> /dev/null; then
+        echo -e "${Y}[*] Installing missing Python dependencies...${NC}"
+        pip3 install requests > /dev/null 2>&1
+    fi
+
+    # Execute Python Bomber
+    python3 modules/sms/bomber.py "$target_num" "$req_count"
+    
+    echo -e "\n${G}[+] Process Finished. Returning to menu...${NC}"
+    sleep 3
+    ./techyfatcat.sh # Restart the tool
+
 else
 
 echo -e "${R}[!] Invalid option${NC}"
