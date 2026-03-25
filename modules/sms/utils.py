@@ -286,31 +286,33 @@ class APIRequestsHandler:
     def __init__(self, target, timeout, proxy={}, verbose=False, verify=False, cc="91", config=None):
         self.config = config or {}
         self.target = target
-        self.headers = self._headers()
-        self.proxy = proxy
-        self.cookies = self._cookies()
+        self.cc = cc
         self.verbose = verbose
         self.verify = verify
         self.timeout = timeout
-        self.cc = cc
-        # Stability check: ensure proxy is a dict or None
+        self.proxy = proxy
+        self.headers = self._headers()
+        self.cookies = self.config.get("cookies", {})
+        
+        # Format the URL itself to allow {cc} and {target} in the link
+        raw_url = self.config.get("url", "")
+        self.url = raw_url.format(cc=self.cc, target=self.target) if isinstance(raw_url, str) else raw_url
+        
+        # Initialize client
         self.client = httpx.Client(http2=False, proxies=self.proxy if self.proxy else None, verify=True)
 
     def _headers(self):
         tmp_headers = {
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
-            "Accept": "*/*",
+            "Accept": "application/json, text/plain, */*",
+            "Content-Type": "application/json" if self.config.get("data_type") == "json" else "application/x-www-form-urlencoded",
             "Connection": "keep-alive"
         }
         if "headers" in self.config:
             tmp_headers.update(self.config["headers"])
         return tmp_headers
 
-    def _cookies(self):
-        return self.config.get("cookies", {})
-
     def _data(self):
-        # Uses .format() safely; handles non-string values like integers in YAML
         return {k: (v.format(cc=self.cc, target=self.target) if isinstance(v, str) else v) 
                 for k, v in self.config.get("data", {}).items()}
 
@@ -321,49 +323,47 @@ class APIRequestsHandler:
     def start(self):
         _result = False
         try:
-            cookies_to_send = self.cookies if isinstance(self.cookies, dict) else {}
+            method = self.config.get("method", "POST").upper()
+            is_json = self.config.get("data_type", "").lower() == "json"
             
-            if self.config.get("method") == "GET":
-                self.params = self._params()
-                resp = self.client.get(
-                    self.config["url"],
-                    params=self.params,
-                    headers=self.headers,
-                    cookies=cookies_to_send,
-                    timeout=self.timeout,
-                )
-            elif self.config.get("method") == "POST":
-                self.data = self._data()
-                is_json = self.config.get("data_type", "").lower() == "json"
-                
-                resp = self.client.post(
-                    self.config["url"],
-                    json=self.data if is_json else None,
-                    data=None if is_json else self.data,
-                    headers=self.headers,
-                    cookies=cookies_to_send,
-                    timeout=self.timeout,
-                )
-            else:
-                return False
+            kwargs = {
+                "url": self.url,
+                "headers": self.headers,
+                "cookies": self.cookies,
+                "timeout": self.timeout,
+            }
 
+            if method == "GET":
+                kwargs["params"] = self._params()
+                resp = self.client.get(**kwargs)
+            else:
+                payload = self._data()
+                if is_json:
+                    kwargs["json"] = payload
+                else:
+                    kwargs["data"] = payload
+                resp = self.client.post(**kwargs)
+
+            # --- SUCCESS LOGIC ---
             identifier = str(self.config.get("identifier", ""))
-            if identifier in resp.text:
+            
+            # Success if identifier matches OR if we get a standard 200/201 code
+            if (identifier and identifier in resp.text) or (resp.status_code in [200, 201]):
                 if self.verbose or self.verify:
-                    print(f"{self.config['name']:<13}: OK")
+                    print(f"{self.config['name']:<13}: OK (Status: {resp.status_code})")
                 _result = True
             else:
                 if self.verbose or self.verify:
-                    print(f"{self.config['name']:<13}: FAIL (Pattern Mismatch)")
+                    print(f"{self.config['name']:<13}: FAIL (Status: {resp.status_code})")
                 _result = False
 
-        except httpx.HTTPError as e:
-            if self.verbose or self.verify:
-                print(f"{self.config['name']:<13}: NETWORK ERROR ({type(e).__name__})")
+        except httpx.HTTPStatusError as e:
+            if self.verbose: print(f"{self.config['name']:<13}: HTTP ERROR {e.response.status_code}")
             _result = False
-        except Exception as error:
-            if self.verbose or self.verify:
-                print(f"{self.config['name']:<13}: SYSTEM ERROR ({type(error).__name__})")
+        except Exception as e:
+            if self.verbose: print(f"{self.config['name']:<13}: ERROR {type(e).__name__}")
             _result = False
+        finally:
+            self.client.close()
         
         return _result
