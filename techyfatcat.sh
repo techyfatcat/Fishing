@@ -170,22 +170,22 @@ elif [[ $option == "3" ]]; then
 ############################################
 
 elif [[ $option == "4" ]]; then
-    echo -e "\n${Y}[*] Initializing SMS Module...${NC}"
-    read -p "  Enter Target Number: " target_num
-    read -p "  Enter Request Count (Recommended 50): " req_count
+    echo -e "\n${Y}[*] Entering Advanced SMS Bomber Mode...${NC}"
+    read -p "  Enter Target Number (10 digits): " target_num
+    read -p "  Enter Number of SMS (e.g., 50): " sms_count
     
-    # Check for Python Requests library
-    if ! python3 -c "import requests" &> /dev/null; then
-        echo -e "${Y}[*] Installing missing Python dependencies...${NC}"
-        pip3 install requests > /dev/null 2>&1
-    fi
-
-    # Execute Python Bomber
-    python3 modules/sms/bomber.py "$target_num" "$req_count"
+    # Move into the directory so the script can find services.yaml
+    cd modules/sms/
     
-    echo -e "\n${G}[+] Process Finished. Returning to menu...${NC}"
-    sleep 3
-    ./techyfatcat.sh # Restart the tool
+    # Run the advanced engine
+    # -N is for number of SMS, -T is for threads
+    python3 bomber.py "$target_num" -N "$sms_count" -T 20 -C 91
+    
+    # Move back to root after finishing
+    cd ../../
+    echo -e "\n${G}[+] Bombing Task Complete.${NC}"
+    sleep 2
+    ./techyfatcat.sh
 
 else
 

