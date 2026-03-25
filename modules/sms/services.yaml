@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-sms:
+providers:
   '91':
     - name: "housing"
       method: "POST"
