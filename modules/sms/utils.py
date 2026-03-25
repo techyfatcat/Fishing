@@ -283,17 +283,8 @@ class CustomArgumentParser(argparse.ArgumentParser):
 # ... (CustomArgumentParser remains the same)
 
 class APIRequestsHandler:
-    def __init__(
-        self,
-        target,
-        timeout,
-        proxy={},
-        verbose=False,
-        verify=False,
-        cc="91",
-        config=None,
-    ):
-        self.config = config
+    def __init__(self, target, timeout, proxy={}, verbose=False, verify=False, cc="91", config=None):
+        self.config = config or {}
         self.target = target
         self.headers = self._headers()
         self.proxy = proxy
@@ -302,13 +293,10 @@ class APIRequestsHandler:
         self.verify = verify
         self.timeout = timeout
         self.cc = cc
-        # CHANGE: Disabled http2 by default to prevent the 'h2' package error
-        # and added a generic User-Agent rotation safety
-        self.client = httpx.Client(http2=False, proxies=self.proxy, verify=True)
-        # REMOVED: self.lock = threading.Lock() -> This was causing the slowness
+        # Stability check: ensure proxy is a dict or None
+        self.client = httpx.Client(http2=False, proxies=self.proxy if self.proxy else None, verify=True)
 
     def _headers(self):
-        # Professional User-Agent to avoid being flagged as a bot
         tmp_headers = {
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
             "Accept": "*/*",
@@ -318,55 +306,64 @@ class APIRequestsHandler:
             tmp_headers.update(self.config["headers"])
         return tmp_headers
 
-    # ... (_cookies, _data, _params methods remain the same)
+    def _cookies(self):
+        return self.config.get("cookies", {})
+
+    def _data(self):
+        # Uses .format() safely; handles non-string values like integers in YAML
+        return {k: (v.format(cc=self.cc, target=self.target) if isinstance(v, str) else v) 
+                for k, v in self.config.get("data", {}).items()}
+
+    def _params(self):
+        return {k: (v.format(cc=self.cc, target=self.target) if isinstance(v, str) else v) 
+                for k, v in self.config.get("params", {}).items()}
 
     def start(self):
         _result = False
         try:
-            # NO LOCK HERE: We want threads to run in parallel!
-            if self.config["method"] == "GET":
+            cookies_to_send = self.cookies if isinstance(self.cookies, dict) else {}
+            
+            if self.config.get("method") == "GET":
                 self.params = self._params()
                 resp = self.client.get(
                     self.config["url"],
                     params=self.params,
                     headers=self.headers,
-                    cookies=self.cookies,
+                    cookies=cookies_to_send,
                     timeout=self.timeout,
                 )
-            elif self.config["method"] == "POST":
+            elif self.config.get("method") == "POST":
                 self.data = self._data()
-                if "data_type" in self.config and self.config["data_type"].lower() == "json":
-                    resp = self.client.post(
-                        self.config["url"],
-                        json=self.data,
-                        headers=self.headers,
-                        cookies=self.cookies,
-                        timeout=self.timeout,
-                    )
-                else:
-                    resp = self.client.post(
-                        self.config["url"],
-                        data=self.data,
-                        headers=self.headers,
-                        cookies=self.cookies,
-                        timeout=self.timeout,
-                    )
+                is_json = self.config.get("data_type", "").lower() == "json"
+                
+                resp = self.client.post(
+                    self.config["url"],
+                    json=self.data if is_json else None,
+                    data=None if is_json else self.data,
+                    headers=self.headers,
+                    cookies=cookies_to_send,
+                    timeout=self.timeout,
+                )
+            else:
+                return False
 
-            # Verification Logic
-            if self.config["identifier"] in resp.text:
+            identifier = str(self.config.get("identifier", ""))
+            if identifier in resp.text:
                 if self.verbose or self.verify:
-                    print("{:<13}: OK".format(self.config["name"]))
+                    print(f"{self.config['name']:<13}: OK")
                 _result = True
             else:
                 if self.verbose or self.verify:
-                    print("{:<13}: FAIL (Pattern Mismatch)".format(self.config["name"]))
-                if self.verbose:
-                    print(f"Response Snippet: {resp.text[:100]}")
+                    print(f"{self.config['name']:<13}: FAIL (Pattern Mismatch)")
                 _result = False
 
+        except httpx.HTTPError as e:
+            if self.verbose or self.verify:
+                print(f"{self.config['name']:<13}: NETWORK ERROR ({type(e).__name__})")
+            _result = False
         except Exception as error:
             if self.verbose or self.verify:
-                print("{:<13}: ERROR ({})".format(self.config["name"], type(error).__name__))
+                print(f"{self.config['name']:<13}: SYSTEM ERROR ({type(error).__name__})")
             _result = False
         
         return _result
