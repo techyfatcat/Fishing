@@ -252,26 +252,23 @@ exit 1
 fi
 
 ############################################
-# SHOW LINK & MASKING OPTION
+# SHOW LINK & MASKING SELECTION
 ############################################
 
-echo
-echo -e "${B}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-echo -e " ${G}GENERATED URL:${NC} ${W}$FINAL_URL${NC}"
+echo -e "\n${B}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+echo -e " ${G}ORIGINAL URL:${NC} ${W}$FINAL_URL${NC}"
 echo -e "${B}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 
 echo
-echo -e "${Y}[?] Would you like to mask this URL? (y/n)${NC}"
-read -p " Selection > " mask_choice
+read -p "  [?] Would you like to mask this URL? (y/n): " mask_ask
 
-if [[ $mask_choice == "y" || $mask_choice == "Y" ]]; then
-    echo -e "\n${C}[*] Handing over to URL Masker...${NC}"
-    
-    # We pass the FINAL_URL as an argument to your python script
+if [[ $mask_ask == "y" || $mask_ask == "Y" ]]; then
+    # Call the python script with the URL as an argument
     python3 tools/masker.py "$FINAL_URL"
-    
-    echo -e "\n${B}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-    echo -e "${G}[+] Masking Complete. Copy the link above.${NC}"
+else
+    # If they say 'n', we remind them of the original link
+    echo -e "\n${G}[+] Using Original Link:${NC} ${W}$FINAL_URL${NC}"
+    echo -e "${B}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 fi
 
 echo
