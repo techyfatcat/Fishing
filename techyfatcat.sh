@@ -252,20 +252,31 @@ exit 1
 fi
 
 ############################################
-# SHOW LINK
+# SHOW LINK & MASKING OPTION
 ############################################
 
 echo
 echo -e "${B}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-
-echo -e " ${G}TARGET URL${NC}"
-
-echo -e " ${W}$FINAL_URL${NC}"
-
+echo -e " ${G}GENERATED URL:${NC} ${W}$FINAL_URL${NC}"
 echo -e "${B}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 
 echo
-echo -e "${C}[*] Waiting for incoming data...${NC}"
+echo -e "${Y}[?] Would you like to mask this URL? (y/n)${NC}"
+read -p " Selection > " mask_choice
+
+if [[ $mask_choice == "y" || $mask_choice == "Y" ]]; then
+    echo -e "\n${C}[*] Handing over to URL Masker...${NC}"
+    
+    # We pass the FINAL_URL as an argument to your python script
+    python3 tools/masker.py "$FINAL_URL"
+    
+    echo -e "\n${B}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+    echo -e "${G}[+] Masking Complete. Copy the link above.${NC}"
+fi
+
+echo
+echo -e "${C}[*] Waiting for incoming data... (CTRL+C to stop)${NC}"
+
 
 ############################################
 # LISTENER LOOP
